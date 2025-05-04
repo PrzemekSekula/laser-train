@@ -16,20 +16,11 @@ from tools import parse_with_config_file
 # Functions the client is willing to execute
 # ---------------------------------------------------------------------------
 
-def add(a, b):
-    return a + b
+
+from mock import send_mask, read_acf
 
 
-def echo(msg):
-    return msg
-
-
-def sleep(seconds):
-    time.sleep(seconds)
-    return f"slept {seconds}s"
-
-
-DISPATCH = {f.__name__: f for f in [add, echo, sleep]}
+DISPATCH = {f.__name__: f for f in [send_mask, read_acf]}
 
 # ---------------------------------------------------------------------------
 # Helper that POSTS and keeps retrying until it gets a usable JSON reply
@@ -58,8 +49,7 @@ def post_retry(args, action, **kw):
 
 def main(args):
     while True:
-        reply = post_retry(args, "query")  # Step 3 – resilient query
-
+        reply = post_retry(args, "query") 
         kind, server_args = reply.get("action"), reply.get("args", [])
 
         if kind == "wait":
@@ -67,6 +57,7 @@ def main(args):
             if args.verbose:
                 print(f"⏳ waiting {n}s")
             time.sleep(n)
+            reply = post_retry(args, "query") 
 
         elif kind == "execute":
             func_name, func_args = server_args

@@ -73,7 +73,7 @@ def objective(pulseCheck, scan_range, vec, pd):
     time.sleep(1)
     delay, acf = ape.read_acf(pulseCheck)
     fwhm, fit, fitness, acf_area = data.calc_pulse_qual(acf, delay, scan_range)
-    return fitness
+     return fitness
 
 def get_acf(pulseCheck, scan_range, vec, pd):
     '''

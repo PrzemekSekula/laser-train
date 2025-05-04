@@ -15,9 +15,10 @@ WORK_QUEUE: "queue.Queue[tuple[str, list]]" = queue.Queue()
 DEFAULT_WAIT_SECONDS = 1                     # how long to tell idle clients to wait
 
 # preload a couple of demo jobs so the first client sees something to do
-WORK_QUEUE.put(("add",   [1, 2]))
-WORK_QUEUE.put(("echo",  ["Hello from server ✨"]))
-WORK_QUEUE.put(("sleep", [3]))              # show that the client can run a local sleep
+WORK_QUEUE.put(("send_mask", [1]))
+WORK_QUEUE.put(("read_acf", ['']))
+WORK_QUEUE.put(("send_mask", [2]))
+WORK_QUEUE.put(("read_acf", ['']))
 
 # --- helpers ----------------------------------------------------------------
 def next_job():
@@ -36,7 +37,8 @@ def rpc():
 
     if action == "query":
         kind, args = next_job()
-        return jsonify({"action": kind, "args": args})
+        res =  jsonify({"action": kind, "args": args})
+        return res
 
     elif action == "response":
         # demo: just log the result that came back
@@ -44,7 +46,8 @@ def rpc():
         app.logger.info("Client response received: %s", res)
         # immediately decide what to do next
         kind, args = next_job()
-        return jsonify({"action": kind, "args": args})
+        res =  jsonify({"action": kind, "args": args})
+        return res
 
     else:
         return jsonify({"error": "unknown action"}), 400
