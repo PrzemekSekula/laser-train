@@ -11,7 +11,7 @@ import json
 
 
 sys.path.append('../laser_train')
-from tools import parse_with_config_file, make_json_safe
+from tools import parse_with_config_file, json_safe
 
 # ---------------------------------------------------------------------------
 # Functions the client is willing to execute
@@ -44,7 +44,7 @@ def post_retry(args, action, **kw):
             print(f'Type: {type(kw)}, keys: {kw.keys()}')
 
 
-            payload = {"action": action, **kw}
+            payload = json_safe({"action": action, **kw})
             resp = requests.post(server_url, json=payload, timeout=30)
             resp.raise_for_status()
             return resp.json()  # may raise ValueError if body isn't JSON
@@ -94,7 +94,7 @@ def main(args):
                 print(f'EROOR: {result}')
 
             # Step 4 & 5 – send the result and instantly get next directive
-            result = make_json_safe(func(*func_args))
+            result = func(*func_args)
             reply  = post_retry(args, "response", result=result)           
 
             # loop continues with the new reply on the next iteration

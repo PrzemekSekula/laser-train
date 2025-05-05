@@ -146,11 +146,14 @@ def log_args_to_tensorboard(logger, args):
     logger.experiment.add_text("Hyperparameters", formatted_hparams, global_step=0)
 
 
-
-def make_json_safe(obj):
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    if isinstance(obj, (np.generic,)):      # np.int32, np.float64 …
-        return obj.item()
-    # add more cases if you need them
-    return obj
+def json_safe(x):
+    """Recursively convert numpy types → native Python types."""
+    if isinstance(x, np.ndarray):
+        return x.tolist()
+    if isinstance(x, (np.generic,)):       # np.float32, np.int64, …
+        return x.item()
+    if isinstance(x, (list, tuple)):
+        return [json_safe(i) for i in x]
+    if isinstance(x, dict):
+        return {k: json_safe(v) for k, v in x.items()}
+    return x
