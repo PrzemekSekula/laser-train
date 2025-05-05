@@ -17,15 +17,18 @@ from tools import parse_with_config_file, json_safe
 # Functions the client is willing to execute
 # ---------------------------------------------------------------------------
 
+USE_MOCK = True
 
-#from mock import read_acf
-from slm_com import send_mask, connect
-import ape_com as ape
-from data_processing import vec_to_mask
+if USE_MOCK:
+    from mock import read_acf, send_mask
+else:
+    from slm_com import send_mask, connect
+    import ape_com as ape
+    from data_processing import vec_to_mask
 
-def read_acf(arg):
-    delay, intensity = ape.read_acf(pulseCheck)
-    return [delay, intensity]
+    def read_acf(arg):
+        delay, intensity = ape.read_acf(pulseCheck)
+        return [delay, intensity]
 
 DISPATCH = {f.__name__: f for f in [send_mask, read_acf]}
 
@@ -115,12 +118,13 @@ if __name__ == "__main__":
         help="List of named configs from configs.yaml to load."
     )
 
-    connect()
-    device_dns_name = "pulsecheck-S09797"
-    tcp_port = 5025
-    scan_range = 50
+    if not USE_MOCK:
+        connect()
+        device_dns_name = "pulsecheck-S09797"
+        tcp_port = 5025
+        scan_range = 50
 
-    pulseCheck = ape.connect(device_dns_name, tcp_port)
+        pulseCheck = ape.connect(device_dns_name, tcp_port)
 
     try:
         main(parse_with_config_file(parser, defaults_name="defaults"))
