@@ -10,6 +10,7 @@ import argparse
 import pathlib
 import yaml
 from types import SimpleNamespace
+import numpy as np
 
 # Optional helper to map Python values to argument types. You can tweak
 # this as needed.
@@ -143,3 +144,13 @@ def log_args_to_tensorboard(logger, args):
     # Optionally, also log a formatted string version.
     formatted_hparams = "\n".join([f"{key}: {value}" for key, value in hparams.items()])
     logger.experiment.add_text("Hyperparameters", formatted_hparams, global_step=0)
+
+
+
+def make_json_safe(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, (np.generic,)):      # np.int32, np.float64 …
+        return obj.item()
+    # add more cases if you need them
+    return obj

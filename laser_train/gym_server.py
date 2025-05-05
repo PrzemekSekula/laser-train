@@ -20,7 +20,11 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 from flask import Flask, request, jsonify
+import random
 
+import sys
+sys.path.append('../laser')
+from data_processing.py import vec_to_mask
 
 # ──────────────────────────────────────────────────────────────────────────
 #  Environment
@@ -36,8 +40,8 @@ class RemoteMaskEnv(gym.Env):
         super().__init__()
 
         # Simple scalar observation; refine to suit your task
-        self.observation_space = spaces.Box(-np.inf, np.inf, shape=(1,),
-                                            dtype=np.float64)
+        self.observation_space = spaces.Box(0, 1023, shape=(20,),
+                                            dtype=np.int)
         self.action_space = spaces.Discrete(100)      # mask index 0‑99, say
 
         self._task_q: "queue.Queue[tuple[str, list[Any]]]" = queue.Queue()
@@ -101,7 +105,7 @@ class RemoteMaskEnv(gym.Env):
         3. Return that response as the observation.
         """
         # 1. Tell the client what to do
-        self._task_q.put(("send_mask", [int(action)]))
+        self._task_q.put(("send_mask", action))
 
         # 2. Wait for the client's result (this **blocks**)
         _ = self._result_q.get()
@@ -137,6 +141,7 @@ if __name__ == "__main__":
     print("RESET  →", obs)
 
     for step_id in range(4):             # will queue 4 send_mask jobs
+        action = [random.randint(0, 1023) for _ in range(20)]
         print(f"STEP {step_id}: waiting for client…")
-        obs, r, term, trunc, info = env.step(step_id + 1)
+        obs, r, term, trunc, info = env.step(action)
         print("   result from client →", obs, info)

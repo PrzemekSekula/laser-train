@@ -7,6 +7,7 @@ Simple task‑server that speaks the 2‑action protocol:
 """
 from flask import Flask, request, jsonify
 import queue, threading, time
+import random
 
 app = Flask(__name__)
 
@@ -15,10 +16,15 @@ WORK_QUEUE: "queue.Queue[tuple[str, list]]" = queue.Queue()
 DEFAULT_WAIT_SECONDS = 1                     # how long to tell idle clients to wait
 
 # preload a couple of demo jobs so the first client sees something to do
-WORK_QUEUE.put(("send_mask", [1]))
+#WORK_QUEUE.put(("send_mask", [1024]))
 WORK_QUEUE.put(("read_acf", ['']))
-WORK_QUEUE.put(("send_mask", [2]))
+#WORK_QUEUE.put(("send_mask", [500]))
 WORK_QUEUE.put(("read_acf", ['']))
+WORK_QUEUE.put(("read_acf", ['']))
+WORK_QUEUE.put(("read_acf", ['']))
+#WORK_QUEUE.put(("send_mask", [200]))
+#WORK_QUEUE.put(("send_mask", [1000]))
+#WORK_QUEUE.put(("send_mask", [50]))
 
 # --- helpers ----------------------------------------------------------------
 def next_job():
@@ -37,6 +43,8 @@ def rpc():
 
     if action == "query":
         kind, args = next_job()
+        if args[0] == "send_mask":
+            args[1] = [random.randint(0, args[1]) for _ in range(20)]
         res =  jsonify({"action": kind, "args": args})
         return res
 
@@ -46,6 +54,8 @@ def rpc():
         app.logger.info("Client response received: %s", res)
         # immediately decide what to do next
         kind, args = next_job()
+        if args[0] == "send_mask":
+            args[1] = [random.randint(0, 1023) for _ in range(20)]
         res =  jsonify({"action": kind, "args": args})
         return res
 
