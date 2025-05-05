@@ -32,9 +32,10 @@ def post_retry(args, action, **kw):
     and try again. This satisfies the new requirement.
     """
     while True:
+        server_url = f"http://{args.host}:{args.port}/{args.endpoint}"
         try:
             resp = requests.post(
-                args.server_url, json={"action": action, **kw}, timeout=30
+                server_url, json={"action": action, **kw}, timeout=30
             )
             resp.raise_for_status()
             return resp.json()  # may raise ValueError if body isn't JSON

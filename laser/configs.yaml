@@ -1,4 +1,7 @@
 defaults:
+  host: "127.0.0.1"
+  port: 8000
+  endpoint: "rpc"
   server_url: "http://127.0.0.1:8000/rpc" # URL of the server
-  retry_delay: 5 # seconds to wait before trying again on failure
+  retry_delay: 1 # seconds to wait before trying again on failure
   verbose: true # whether to print verbose output
