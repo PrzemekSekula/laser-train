@@ -7,6 +7,7 @@ import sys
 import requests
 import time
 import argparse
+import json
 
 
 sys.path.append('../laser_train')
@@ -17,8 +18,14 @@ from tools import parse_with_config_file
 # ---------------------------------------------------------------------------
 
 
-from mock import send_mask, read_acf
+#from mock import read_acf
+from slm_com import send_mask, connect
+import ape_com as ape
+from data_processing import vec_to_mask
 
+def read_acf(arg):
+    delay, intensity = ape.read_acf(pulseCheck)
+    return [delay, intensity]
 
 DISPATCH = {f.__name__: f for f in [send_mask, read_acf]}
 
@@ -34,8 +41,9 @@ def post_retry(args, action, **kw):
     while True:
         server_url = f"http://{args.host}:{args.port}/{args.endpoint}"
         try:
+            print(f'Type: {type(kw)}, keys: {kw.keys()}')
             resp = requests.post(
-                server_url, json={"action": action, **kw}, timeout=30
+                server_url, json=json.dumps({"action": action, **kw}), timeout=30
             )
             resp.raise_for_status()
             return resp.json()  # may raise ValueError if body isn't JSON
@@ -44,11 +52,14 @@ def post_retry(args, action, **kw):
             time.sleep(args.retry_delay)
 
 
+
+
 # ---------------------------------------------------------------------------
 # Main client loop following the 5‑step protocol
 # ---------------------------------------------------------------------------
 
 def main(args):
+
     while True:
         reply = post_retry(args, "query") 
         kind, server_args = reply.get("action"), reply.get("args", [])
@@ -71,13 +82,19 @@ def main(args):
 
             if args.verbose:
                 print(f"▶️  executing {func_name}{tuple(func_args)}")
+
+            if func_name == "send_mask":
+                func_args = [vec_to_mask(func_args, int(1920/len(func_args)))]
+                print (func_args)
             try:
                 result = func(*func_args)
             except Exception as ex:
                 result = f"error: {ex!r}"
+                print(f'EROOR: {result}')
 
             # Step 4 & 5 – send the result and instantly get next directive
             reply = post_retry(args, "response", result=result)
+            kind, server_args = reply.get("action"), reply.get("args", [])
             # loop continues with the new reply on the next iteration
 
         else:
@@ -95,6 +112,13 @@ if __name__ == "__main__":
         nargs="+", 
         help="List of named configs from configs.yaml to load."
     )
+
+    connect()
+    device_dns_name = "pulsecheck-S09797"
+    tcp_port = 5025
+    scan_range = 50
+
+    pulseCheck = ape.connect(device_dns_name, tcp_port)
 
     try:
         main(parse_with_config_file(parser, defaults_name="defaults"))

@@ -16,4 +16,5 @@ def connect():
 def send_mask(mask):
     c = mask.ctypes.data_as(ctypes.POINTER((ctypes.c_int16 * slm_h) * slm_w)).contents
     slm_status = slm.SLM_DVI_Display_Data(c, slm_w, slm_h, 0, 2)
+    print(f'Mask sent.')
     return slm_status
