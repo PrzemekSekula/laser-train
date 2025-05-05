@@ -24,7 +24,7 @@ import random
 
 import sys
 sys.path.append('../laser')
-from data_processing.py import vec_to_mask
+#from data_processing.py import vec_to_mask
 
 # ──────────────────────────────────────────────────────────────────────────
 #  Environment
@@ -39,29 +39,31 @@ class RemoteMaskEnv(gym.Env):
         """Start the Flask server in a background thread and expose a Gym env."""
         super().__init__()
 
-        # Simple scalar observation; refine to suit your task
-        self.observation_space = spaces.Box(0, 1023, shape=(20,),
-                                            dtype=np.int)
-        self.action_space = spaces.Discrete(100)      # mask index 0‑99, say
+        self.action_space = spaces.Box(
+            low=0.0,
+            high=1023.0,
+            shape=(20,),
+            dtype=np.int32,                # continuous, uniform bounds per dim
+        )
 
         self._task_q: "queue.Queue[tuple[str, list[Any]]]" = queue.Queue()
         self._result_q: "queue.Queue[Any]" = queue.Queue()
         self._DEFAULT_WAIT = default_wait
-
+  
         # ------------------------------------------------------------------
         # Build the Flask app and launch it
         # ------------------------------------------------------------------
         app = Flask(__name__)
-
+        
         @app.post("/rpc")
         def rpc():
             data = request.get_json(force=True) or {}
             act = data.get("action")
-
             if act == "query":
                 # Does the env have a task ready for the client?
                 try:
                     func_name, func_args = self._task_q.get_nowait()
+                    print ('DEB', func_name, func_args)
                     return jsonify({"action": "execute",
                                     "args": [func_name, func_args]})
                 except queue.Empty:
@@ -76,6 +78,7 @@ class RemoteMaskEnv(gym.Env):
                 return jsonify({"action": "wait",
                                 "args": [self._DEFAULT_WAIT]})
             else:
+                print ('ERROR: ', act)
                 return jsonify({"error": "unknown action"}), 400
 
         # run() blocks, so put it in a daemon thread
@@ -105,23 +108,27 @@ class RemoteMaskEnv(gym.Env):
         3. Return that response as the observation.
         """
         # 1. Tell the client what to do
+
+
         self._task_q.put(("send_mask", action))
 
         # 2. Wait for the client's result (this **blocks**)
         _ = self._result_q.get()
 
-
         # Read the ACF (probably current state)
         self._task_q.put(("read_acf", ['']))
+        
         # 2. Wait for the client's result (this **blocks**)
         result = self._result_q.get()
 
+        # Flatten the list of lists - result contains [delays, intensities]
+        result = [item for sublist in result for item in sublist]
         # 3. Build Gymnasium‑style return values
         obs = np.array([result], dtype=np.float64)
         reward = 0.0                 # put your own logic here
         terminated = False
         truncated = False
-        info = {"mask": int(action)}
+        info = {"info": ""}
 
         return obs, reward, terminated, truncated, info
 
@@ -144,4 +151,4 @@ if __name__ == "__main__":
         action = [random.randint(0, 1023) for _ in range(20)]
         print(f"STEP {step_id}: waiting for client…")
         obs, r, term, trunc, info = env.step(action)
-        print("   result from client →", obs, info)
+        print("   result from client →", obs.shape, type(obs))

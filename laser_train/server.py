@@ -51,7 +51,9 @@ def rpc():
     elif action == "response":
         # demo: just log the result that came back
         res = data.get("result")
-        app.logger.info("Client response received: %s", res)
+        #app.logger.info("Client response received: %s", res)
+        #print("Client response received: %s", res)
+        print ('Result', type(res), len(res[0]), len(res[1]))
         # immediately decide what to do next
         kind, args = next_job()
         if args[0] == "send_mask":
