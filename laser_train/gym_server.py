@@ -34,7 +34,7 @@ class RemoteMaskEnv(gym.Env):
 
     def __init__(self,
                  host: str = "0.0.0.0",
-                 port: int = 8000,
+                 port: int = 9400,
                  default_wait: int = 1):
         """Start the Flask server in a background thread and expose a Gym env."""
         super().__init__()

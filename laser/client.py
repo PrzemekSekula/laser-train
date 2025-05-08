@@ -88,7 +88,10 @@ def main(args):
                 print(f"▶️  executing {func_name}{tuple(func_args)}")
 
             if func_name == "send_mask":
-                func_args = [vec_to_mask(func_args, int(1920/len(func_args)))]
+                if USE_MOCK:
+                    func_args = [func_args]
+                else:
+                    func_args = [vec_to_mask(func_args, int(1920/len(func_args)))]
                 print (func_args)
             try:
                 result = func(*func_args)

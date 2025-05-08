@@ -1,5 +1,6 @@
 defaults:
-  host: "192.168.100.37"
+  #host: "192.168.100.37"
+  host: "212.106.181.37"
   port: 9400
   endpoint: "rpc"
   retry_delay: 1 # seconds to wait before trying again on failure
